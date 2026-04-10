@@ -91,3 +91,13 @@ git commit -m "Your message"
 When the conversation restarts, AGENTS.md will be reloaded with project context.
 For long sessions, use `/compact` to summarize older messages.
 For branching work, use `/tree` to switch branches with context summaries.
+
+## Session Continuity
+
+For development planning and session context, see:
+
+- `.pi/plans/DEVELOPMENT_PLAN.md` - Complete development roadmap
+- `.pi/plans/SESSION_CHECKLIST.md` - Session startup checklist
+- `.pi/plans/SDK_NOTES.md` - SDK-specific details (created during development)
+
+These files are automatically loaded by the pi coding agent to maintain context across sessions.
