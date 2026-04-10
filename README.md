@@ -2,6 +2,8 @@
 
 A lean, lazy-loading MCP (Model Context Protocol) server for Plane project management. This implementation focuses on reducing context size by only loading tools on-demand, making it much more efficient than the original 109-tool implementation.
 
+[![AI-DECLARATION: copilot](https://img.shields.io/badge/䷼%20AI--DECLARATION-copilot-fee2e2?labelColor=fee2e2)](https://ai-declaration.md)
+
 ## 🚀 Features
 
 - **Lazy Loading**: Tools are only loaded when needed, significantly reducing LLM context size
