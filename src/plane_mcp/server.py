@@ -42,7 +42,7 @@ def get_plane_client() -> PlaneClientWrapper:
 
 # Create the FastMCP server instance
 mcp = FastMCP(
-    name="plane-mcp",
+    name="plane-mcp-redux",
     instructions="Plane project management MCP server. Use workspace tools to discover workspaces, then project tools to explore projects, and issue tools to manage work items. Most commonly used: list_issues, get_issue, create_issue, update_issue_state.",
 )
 

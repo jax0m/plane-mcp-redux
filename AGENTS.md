@@ -1,4 +1,4 @@
-# Plane MCP Redux - AGENTS.md
+# Plane-MCP-Redux - AGENTS.md
 
 ## Project Overview
 
@@ -13,8 +13,8 @@ A lean, lazy-loading MCP server for Plane project management using FastMCP 3.x a
 
 ## Key Files
 
-- `src/plane_mcp_server/server.py` - All tool definitions with @mcp.tool
-- `src/plane_mcp_server/client.py` - PlaneClientWrapper (SDK adapter)
+- `src/plane_mcp/server.py` - All tool definitions with @mcp.tool
+- `src/plane_mcp/client.py` - PlaneClientWrapper (SDK adapter)
 - `pyproject.toml` - Dependencies and tool configuration
 - `.env` - API credentials
 
@@ -28,15 +28,15 @@ pip install -e ".[dev]"
 pytest tests/ -v
 
 # Type check
-ty check src/plane_mcp_server/
-mypy src/plane_mcp_server/
+ty check src/plane_mcp/
+mypy src/plane_mcp/
 
 # Lint/format
 ruff check --fix src/ tests/
 ruff format src/ tests/
 
 # Run server
-plane-mcp
+pmc
 
 # All checks
 make check
@@ -84,9 +84,6 @@ def get_plane_client() -> PlaneClientWrapper:
 git add <files>
 pre-commit run
 git commit -m "Your message"
-
-# Only use --all-files for initial setup or large refactors
-pre-commit run --all-files
 ```
 
 ## Context Preservation

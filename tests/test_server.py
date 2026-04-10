@@ -1,7 +1,7 @@
 """Tests for Plane MCP server."""
 
-from plane_mcp_server.client import PlaneClientWrapper
-from plane_mcp_server.server import PlaneConfig, get_plane_client, mcp
+from plane_mcp.client import PlaneClientWrapper
+from plane_mcp.server import PlaneConfig, get_plane_client, mcp
 
 
 class TestPlaneConfig:
@@ -35,7 +35,7 @@ class TestFastMCPInstance:
     def test_mcp_instance_exists(self):
         """Test that mcp instance is created."""
         assert mcp is not None
-        assert mcp.name == "plane-mcp"
+        assert mcp.name == "plane-mcp-redux"
 
     def test_mcp_has_instructions(self):
         """Test that MCP has instructions."""

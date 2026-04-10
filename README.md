@@ -1,4 +1,4 @@
-# Plane MCP Redux
+# Plane-MCP-Redux
 
 A lean, lazy-loading MCP (Model Context Protocol) server for Plane project management. This implementation focuses on reducing context size by only loading tools on-demand, making it much more efficient than the original 109-tool implementation.
 
@@ -17,7 +17,7 @@ A lean, lazy-loading MCP (Model Context Protocol) server for Plane project manag
 ```
 plane-mcp-redux/
 ├── pyproject.toml          # Project configuration & dependencies
-├── src/plane_mcp_server/   # Main package
+├── src/plane_mcp/   # Main package
 │   ├── __init__.py
 │   ├── main.py             # Entry point
 │   ├── server.py           # Core MCP server with lazy loading
@@ -71,10 +71,10 @@ PLANE_WORKSPACE_SLUG=your_workspace_slug
 
 ```bash
 # Standard mode
-python -m plane_mcp_server
+python -m plane_mcp
 
 # Or using the entry point
-plane-mcp
+pmc
 ```
 
 ### MCP Client Configuration
@@ -86,7 +86,7 @@ Add to your MCP client configuration:
     "mcpServers": {
         "plane": {
             "command": "python",
-            "args": ["-m", "plane_mcp_server"],
+            "args": ["-m", "plane_mcp"],
             "env": {
                 "PLANE_BASE_URL": "https://api.plane.so",
                 "PLANE_API_KEY": "your_api_key",
@@ -158,7 +158,7 @@ Add to your MCP client configuration:
 pytest
 
 # Run with coverage
-pytest --cov=src/plane_mcp_server
+pytest --cov=src/plane_mcp
 
 # Run specific test file
 pytest tests/test_server.py -v
@@ -166,10 +166,10 @@ pytest tests/test_server.py -v
 
 ## 🔧 Extending with New Tools
 
-1. Create a new file in `src/plane_mcp_server/tools/`
+1. Create a new file in `src/plane_mcp/tools/`
 
 ```python
-# src/plane_mcp_server/tools/label.py
+# src/plane_mcp/tools/label.py
 from .base import PlaneTool
 
 class LabelTool(PlaneTool):
@@ -185,7 +185,7 @@ class LabelTool(PlaneTool):
 2. Update `pyproject.toml` to include your tool
 
 ```toml
-[tool.plane-mcp]
+[tool.pmc]
 enabled_tools = [
     # ... existing tools
     "list_labels",

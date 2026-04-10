@@ -42,7 +42,7 @@ dev = [
 ]
 
 [project.scripts]
-plane-mcp = "plane_mcp_server.main:main"
+plane_rex = "plane_mcp.main:main"
 
 [project.urls]
 Homepage = "https://github.com/jax0m/plane-mcp-redux"
@@ -50,7 +50,7 @@ Repository = "https://github.com/jax0m/plane-mcp-redux"
 Issues = "https://github.com/jax0m/plane-mcp-redux/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/plane_mcp_redux"]
+packages = ["src/plane_mcp"]
 
 [tool.ruff]
 line-length = 88
@@ -74,7 +74,7 @@ quote-style = "double"
 indent-style = "space"
 
 [tool.ruff.lint.isort]
-known-first-party = ["plane_mcp_redux"]
+known-first-party = ["plane_mcp"]
 
 [tool.ty.rules]
 invalid-assignment = "ignore"
@@ -111,7 +111,7 @@ asyncio_default_fixture_loop_scope = "function"
 addopts = "-v --tb=short"
 
 [tool.coverage.run]
-source = ["src/plane_mcp_redux"]
+source = ["src/plane_mcp"]
 branch = true
 
 [tool.coverage.report]
