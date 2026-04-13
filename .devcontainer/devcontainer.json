@@ -27,8 +27,17 @@
         "bierner.markdown-mermaid",
         "github.vscode-pull-request-github",
         "github.vscode-github-actions",
-        "ms-vscode-remote.remote-containers"
+        "ms-vscode-remote.remote-containers",
+        "ms-python.flake8",
+        "charliermarsh.ruff",
+        "ms-python.vscode-python-envs",
+        "ms-python.debugpy",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.mypy-type-checker"
       ]
     }
-  }
+  },
+  "onCreateCommand": "sudo apt update && sudo apt install -y python3 python3-venv python3-pip pre-commit python-is-python3 gh dos2unix",
+  "postCreateCommand": ".devcontainer/postCreate.sh && pre-commit install"
 }
