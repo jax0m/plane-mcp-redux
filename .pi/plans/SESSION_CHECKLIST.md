@@ -14,7 +14,7 @@
 
 - [ ] Read `AGENTS.md` - Project overview and patterns
 - [ ] Read `.pi/plans/DEVELOPMENT_PLAN.md` - Main roadmap
-- [ ] Read `docs/makeplane_plane-python-sdk/INDEX.md` - SDK documentation
+- Read `docs/makeplane_plane-python-sdk/INDEX.md` - SDK documentation
 
 ### 2. Verify Environment
 
@@ -71,7 +71,7 @@ grep PLANE_WORKSPACE_SLUG .env
 - [AGENTS.md](../AGENTS.md) - Project overview
 - [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md) - Main roadmap
 - [SDK_API_MAPPING.md](SDK_API_MAPPING.md) - SDK methods
-- [docs/makeplane_plane-python-sdk/INDEX.md](../docs/makeplane_plane-python-sdk/INDEX.md) - SDK docs
+- [INDEX.md](../docs/makeplane_plane-python-sdk/INDEX.md) - SDK docs
 
 ---
 

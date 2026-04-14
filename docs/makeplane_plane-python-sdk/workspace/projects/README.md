@@ -333,8 +333,8 @@ client.projects.update(
 ## 🔗 Related Documentation
 
 - [Stickies Documentation](STICKIES.md) - Workspace-level resource
-- [UUID Management Guide](../../../.pi/plans/UUID_AND_DEPENDENCY_GUIDE.md)
-- [SDK API Mapping](../../../.pi/plans/SDK_API_MAPPING.md)
+- [UUID Management Guide](../planning/UUID_AND_DEPENDENCY_GUIDE.md)
+- [SDK API Mapping](../planning/SDK_API_MAPPING.md)
 
 ---
 
@@ -411,7 +411,7 @@ Projects support custom branding:
 
 - [Labels](work_items/LABELS.md) - Label features
 - [Work Items](WORK_ITEMS.md) - Work item features
-- [UUID Management](../../../.pi/plans/UUID_AND_DEPENDENCY_GUIDE.md)
+- [UUID Management](../planning/UUID_AND_DEPENDENCY_GUIDE.md)
 
 ---
 

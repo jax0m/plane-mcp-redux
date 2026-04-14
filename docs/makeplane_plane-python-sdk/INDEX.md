@@ -15,7 +15,7 @@ docs/
 └── makeplane_plane-python-sdk/
     ├── INDEX.md                          # This file
     ├── FASTMCP_TOOL_DESIGN.md            # Tool signatures
-    ├── INVESTIGATION_STRATEGY.md (.pi/plans)/         # Testing approach
+    ├── ../planning/INVESTIGATION_STRATEGY.md         # Testing approach
     ├── SESSION_SUMMARY.md                # Session status
     ├── workspace/
     │   ├── STICKIES.md                   # Workspace-level
@@ -74,7 +74,7 @@ docs/
 
 ## 🔗 Related Documentation
 
-- [INVESTIGATION_STRATEGY.md (.pi/plans)/](INVESTIGATION_STRATEGY.md (.pi/plans)/) - Testing approach
+- [../planning/INVESTIGATION_STRATEGY.md](../planning/INVESTIGATION_STRATEGY.md) - Testing approach
 - [SESSION_SUMMARY.md](SESSION_SUMMARY.md) - Current status
 - [FASTMCP_TOOL_DESIGN.md](FASTMCP_TOOL_DESIGN.md) - Tool signatures
 

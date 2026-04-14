@@ -401,7 +401,7 @@ async def delete_module(
 - [Projects](PROJECTS.md) - Parent resource with module_view flag
 - [Work Items](WORK_ITEMS.md) - Items that can be added to modules
 - [Labels](work_items/LABELS.md) - Alternative organization method
-- [UUID Management Guide](../../../.pi/plans/UUID_AND_DEPENDENCY_GUIDE.md)
+- [UUID Management Guide](../planning/UUID_AND_DEPENDENCY_GUIDE.md)
 
 ---
 

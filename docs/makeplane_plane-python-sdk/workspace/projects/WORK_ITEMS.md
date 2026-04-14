@@ -375,8 +375,8 @@ client.work_items.update(
 - [Projects](projects/README.md) - Parent resource
 - [Labels](LABELS.md) - Labels for work items
 - [Modules](MODULES.md) - Modules for work items
-- [UUID Management Guide](../../../.pi/plans/UUID_AND_DEPENDENCY_GUIDE.md)
-- [SDK API Mapping](../../../.pi/plans/SDK_API_MAPPING.md)
+- [UUID Management Guide](../planning/UUID_AND_DEPENDENCY_GUIDE.md)
+- [SDK API Mapping](../planning/SDK_API_MAPPING.md)
 - [FastMCP Tool Design](../../FASTMCP_TOOL_DESIGN.md)
 
 ---

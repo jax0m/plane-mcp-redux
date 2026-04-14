@@ -458,7 +458,7 @@ client.cycles.update(
 - [Projects](README.md) - Parent resource with feature flags
 - [Modules](MODULES.md) - Similar project-level organization
 - [Work Items](work_items/README.md) - Work items can be assigned to cycles
-- [Investigation Strategy](../../../.pi/plans/INVESTIGATION_STRATEGY.md)
+- [Investigation Strategy](../planning/INVESTIGATION_STRATEGY.md)
 - [Project Features Investigation](../../SESSION_SUMMARY.md)
 
 ---

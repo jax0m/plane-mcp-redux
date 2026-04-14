@@ -374,7 +374,7 @@ async def assign_label(
 
 - [Work Items](../WORK_ITEMS.md) - Labels assigned here
 - [Work Item Properties](../work_items/WORK_ITEM_PROPERTIES_REFERENCE.md) - labels field
-- [UUID Management Guide](../../../.pi/plans/UUID_AND_DEPENDENCY_GUIDE.md)
+- [UUID Management Guide](../planning/UUID_AND_DEPENDENCY_GUIDE.md)
 
 ---
 

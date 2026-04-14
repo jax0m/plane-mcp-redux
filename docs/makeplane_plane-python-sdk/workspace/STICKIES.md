@@ -352,9 +352,9 @@ async def delete_sticky(workspace_id: str, sticky_id: str) -> dict:
 
 ## 🔗 Related Documentation
 
-- [UUID Management Guide](../../../.pi/plans/UUID_AND_DEPENDENCY_GUIDE.md)
-- [Information Collection Guide](../../../.pi/plans/INVESTIGATION_STRATEGY.md)
-- [SDK API Mapping](../../../.pi/plans/SDK_API_MAPPING.md)
+- [UUID Management Guide](../planning/UUID_AND_DEPENDENCY_GUIDE.md)
+- [Information Collection Guide](../planning/INVESTIGATION_STRATEGY.md)
+- [SDK API Mapping](../planning/SDK_API_MAPPING.md)
 
 ---
 

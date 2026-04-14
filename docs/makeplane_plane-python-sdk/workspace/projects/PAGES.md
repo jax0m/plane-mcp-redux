@@ -255,7 +255,7 @@ page = client.pages.retrieve_project_page(
 - [Projects](README.md) - Parent resource with feature flags
 - [Cycles](CYCLES.md) - Similar project-level feature (also CE limited)
 - [Work Items](work_items/README.md) - Pages can show work items
-- [Investigation Strategy](../../../.pi/plans/INVESTIGATION_STRATEGY.md)
+- [Investigation Strategy](../planning/INVESTIGATION_STRATEGY.md)
 - [Project Features Investigation](../../SESSION_SUMMARY.md)
 
 ---

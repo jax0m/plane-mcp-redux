@@ -490,7 +490,7 @@ sticky = client.stickies.retrieve(
 - [Stickies API](../workspace/STICKIES.md)
 - [Work Items API](../workspace/WORK_ITEMS.md)
 - [Work Item Properties](../workspace/work_items/WORK_ITEM_PROPERTIES_REFERENCE.md)
-- [UUID Management Guide](../../../.pi/plans/UUID_AND_DEPENDENCY_GUIDE.md)
+- [UUID Management Guide](../planning/UUID_AND_DEPENDENCY_GUIDE.md)
 
 ---
 

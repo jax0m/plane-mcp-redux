@@ -130,7 +130,7 @@ project = client.projects.create(workspace_slug="slug", data=data)
 
 1. `AGENTS.md` - Project overview
 2. `.pi/plans/DEVELOPMENT_PLAN.md` - This file
-3. `docs/makeplane_plane-python-sdk/INDEX.md` - SDK documentation
+3. [docs/makeplane_plane-python-sdk/INDEX.md](../docs/makeplane_plane-python-sdk/INDEX.md) - SDK documentation
 
 ---
 
