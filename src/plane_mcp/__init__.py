@@ -4,6 +4,6 @@ __version__ = "0.1.0"
 __author__ = "Your Name"
 
 from .client import PlaneClientWrapper
-from .server import PlaneConfig, mcp
+from .server import mcp
 
-__all__ = ["mcp", "PlaneConfig", "PlaneClientWrapper"]
+__all__ = ["mcp", "PlaneClientWrapper"]
