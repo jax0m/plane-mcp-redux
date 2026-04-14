@@ -4,6 +4,11 @@
 from typing import Any
 
 from plane import PlaneClient
+from plane.models.cycles import CreateCycle
+from plane.models.pages import CreatePage
+from plane.models.projects import CreateProject
+from plane.models.query_params import PaginatedQueryParams
+from plane.models.work_items import CreateWorkItem
 
 
 class PlaneClientWrapper:
@@ -39,12 +44,11 @@ class PlaneClientWrapper:
     async def close(self) -> None:
         """Clean up client resources."""
         if self._client:
-            # PlaneClient may have async cleanup in future versions
             pass
 
     # ==================== Workspace Methods ====================
 
-    def get_workspace(self, workspace_id: str) -> dict[str, Any] | None:
+    def get_workspace(self, workspace_slug: str) -> dict[str, Any] | None:
         """
         Get workspace details.
 
@@ -52,8 +56,7 @@ class PlaneClientWrapper:
         through teamspace resource.
         """
         try:
-            # Try to retrieve by ID
-            result = self.client.teamspaces.retrieve(id=workspace_id)
+            result = self.client.teamspaces.retrieve(workspace_slug=workspace_slug)
             return result.model_dump() if result else None
         except Exception:
             return None
@@ -62,17 +65,24 @@ class PlaneClientWrapper:
         """List all workspaces (teamspaces)."""
         try:
             result = self.client.teamspaces.list()
-            return [t.model_dump() for t in result] if result else []
+            # Handle paginated response
+            if hasattr(result, "results"):
+                return (
+                    [t.model_dump() for t in result.results] if result.results else []
+                )
+            return []
         except Exception:
             return []
 
     # ==================== Project Methods ====================
 
-    def get_project(self, workspace_id: str, project_id: str) -> dict[str, Any] | None:
+    def get_project(
+        self, workspace_slug: str, project_id: str
+    ) -> dict[str, Any] | None:
         """Get project details by ID."""
         try:
             result = self.client.projects.retrieve(
-                workspace_id=workspace_id,
+                workspace_slug=workspace_slug,
                 project_id=project_id,
             )
             return result.model_dump() if result else None
@@ -80,22 +90,27 @@ class PlaneClientWrapper:
             return None
 
     def list_projects(
-        self, workspace_id: str, page: int = 1, limit: int = 20
+        self, workspace_slug: str, page: int = 1, limit: int = 20
     ) -> list[dict[str, Any]]:
         """List projects in a workspace."""
         try:
+            params = PaginatedQueryParams(per_page=limit)
             result = self.client.projects.list(
-                workspace_id=workspace_id,
-                page=page,
-                limit=limit,
+                workspace_slug=workspace_slug,
+                params=params,
             )
-            return [p.model_dump() for p in result] if result else []
+            # Handle PaginatedProjectResponse
+            if hasattr(result, "results"):
+                return (
+                    [p.model_dump() for p in result.results] if result.results else []
+                )
+            return []
         except Exception:
             return []
 
     def create_project(
         self,
-        workspace_id: str,
+        workspace_slug: str,
         name: str,
         description: str | None = None,
         project_type: str | None = None,
@@ -103,18 +118,16 @@ class PlaneClientWrapper:
     ) -> dict[str, Any] | None:
         """Create a new project."""
         try:
-            data = {
-                "name": name,
-            }
+            data = CreateProject(name=name, identifier="TEMP-IDENTIFIER")
             if description:
-                data["description"] = description
+                data.description = description
             if project_type:
-                data["type"] = project_type
+                data.type = project_type
             if lead:
-                data["lead"] = lead
+                data.project_lead = lead
 
             result = self.client.projects.create(
-                workspace_id=workspace_id,
+                workspace_slug=workspace_slug,
                 data=data,
             )
             return result.model_dump() if result else None
@@ -123,14 +136,14 @@ class PlaneClientWrapper:
 
     def update_project(  # type: ignore[no-untyped-def]
         self,
-        workspace_id: str,
+        workspace_slug: str,
         project_id: str,
         **kwargs,
     ) -> dict[str, Any] | None:
         """Update an existing project."""
         try:
             result = self.client.projects.update(
-                workspace_id=workspace_id,
+                workspace_slug=workspace_slug,
                 project_id=project_id,
                 data=kwargs,
             )
@@ -141,12 +154,12 @@ class PlaneClientWrapper:
     # ==================== Work Item (Issue) Methods ====================
 
     def get_work_item(
-        self, workspace_id: str, project_id: str, work_item_id: str
+        self, workspace_slug: str, project_id: str, work_item_id: str
     ) -> dict[str, Any] | None:
         """Get work item (issue) details by ID."""
         try:
             result = self.client.work_items.retrieve(
-                workspace_id=workspace_id,
+                workspace_slug=workspace_slug,
                 project_id=project_id,
                 identifier=work_item_id,
             )
@@ -156,7 +169,7 @@ class PlaneClientWrapper:
 
     def list_work_items(
         self,
-        workspace_id: str,
+        workspace_slug: str,
         project_id: str,
         page: int = 1,
         limit: int = 20,
@@ -166,14 +179,13 @@ class PlaneClientWrapper:
         List work items (issues) with optional filters.
 
         Args:
-            workspace_id: Workspace ID
+            workspace_slug: Workspace slug
             project_id: Project ID
             page: Page number
             limit: Results per page
             **filters: Additional filters (state, assignee, labels, etc.)
         """
         try:
-            # Convert filters to query params
             params = {
                 "page": page,
                 "limit": limit,
@@ -181,7 +193,7 @@ class PlaneClientWrapper:
             }
 
             result = self.client.work_items.list(
-                workspace_id=workspace_id,
+                workspace_slug=workspace_slug,
                 project_id=project_id,
                 **params,
             )
@@ -191,36 +203,29 @@ class PlaneClientWrapper:
 
     def create_work_item(
         self,
-        workspace_id: str,
+        workspace_slug: str,
         project_id: str,
         title: str,
         description: str | None = None,
         state: str | None = None,
         assignee: str | None = None,
         labels: list[str] | None = None,
-        type: str | None = "issue",  # issue, task, bug, etc.
+        type: str | None = "issue",
     ) -> dict[str, Any] | None:
         """Create a new work item (issue)."""
         try:
-            data = {
-                "name": title,  # Field name is 'name' in Plane
-                "type": type or "issue",
-            }
-
-            if description:
-                data["description_html"] = description  # HTML format expected
-
+            data = CreateWorkItem(
+                name=title, type=type or "issue", description_html=description or ""
+            )
             if state:
-                data["state"] = state
-
+                data.state = state
             if assignee:
-                data["assignees"] = [assignee]  # type: ignore[assignment]  # type: ignore[assignment]
-
+                data.assignees = [assignee]
             if labels:
-                data["labels"] = labels  # type: ignore[assignment]  # type: ignore[assignment]
+                data.labels = labels
 
             result = self.client.work_items.create(
-                workspace_id=workspace_id,
+                workspace_slug=workspace_slug,
                 project_id=project_id,
                 data=data,
             )
@@ -230,7 +235,7 @@ class PlaneClientWrapper:
 
     def update_work_item(
         self,
-        workspace_id: str,
+        workspace_slug: str,
         project_id: str,
         work_item_id: str,
         **kwargs,
@@ -238,7 +243,7 @@ class PlaneClientWrapper:
         """Update an existing work item."""
         try:
             result = self.client.work_items.update(
-                workspace_id=workspace_id,
+                workspace_slug=workspace_slug,
                 project_id=project_id,
                 identifier=work_item_id,
                 data=kwargs,
@@ -248,12 +253,12 @@ class PlaneClientWrapper:
             return None
 
     def delete_work_item(
-        self, workspace_id: str, project_id: str, work_item_id: str
+        self, workspace_slug: str, project_id: str, work_item_id: str
     ) -> bool:
         """Delete a work item."""
         try:
             self.client.work_items.delete(
-                workspace_id=workspace_id,
+                workspace_slug=workspace_slug,
                 project_id=project_id,
                 identifier=work_item_id,
             )
@@ -264,12 +269,12 @@ class PlaneClientWrapper:
     # ==================== Cycle Methods ====================
 
     def get_cycle(
-        self, workspace_id: str, project_id: str, cycle_id: str
+        self, workspace_slug: str, project_id: str, cycle_id: str
     ) -> dict[str, Any] | None:
         """Get cycle details."""
         try:
             result = self.client.cycles.retrieve(
-                workspace_id=workspace_id,
+                workspace_slug=workspace_slug,
                 project_id=project_id,
                 cycle_id=cycle_id,
             )
@@ -278,23 +283,28 @@ class PlaneClientWrapper:
             return None
 
     def list_cycles(
-        self, workspace_id: str, project_id: str, page: int = 1, limit: int = 20
+        self, workspace_slug: str, project_id: str, page: int = 1, limit: int = 20
     ) -> list[dict[str, Any]]:
         """List cycles in a project."""
         try:
+            params = PaginatedQueryParams(per_page=limit)
             result = self.client.cycles.list(
-                workspace_id=workspace_id,
+                workspace_slug=workspace_slug,
                 project_id=project_id,
-                page=page,
-                limit=limit,
+                params=params,
             )
-            return [c.model_dump() for c in result] if result else []
+            # Handle paginated response
+            if hasattr(result, "results"):
+                return (
+                    [c.model_dump() for c in result.results] if result.results else []
+                )
+            return []
         except Exception:
             return []
 
-    def create_cycle(  # type: ignore[no-untyped-def]
+    def create_cycle(
         self,
-        workspace_id: str,
+        workspace_slug: str,
         project_id: str,
         name: str,
         start_date: str | None = None,
@@ -303,16 +313,14 @@ class PlaneClientWrapper:
     ) -> dict[str, Any] | None:
         """Create a new cycle."""
         try:
-            data = {"name": name}
-            if start_date:
-                data["start_date"] = start_date
-            if end_date:
-                data["end_date"] = end_date
-            if description:
-                data["description_html"] = description
-
+            data = CreateCycle(
+                name=name,
+                start_date=start_date,
+                end_date=end_date,
+                description_html=description or "",
+            )
             result = self.client.cycles.create(
-                workspace_id=workspace_id,
+                workspace_slug=workspace_slug,
                 project_id=project_id,
                 data=data,
             )
@@ -320,9 +328,9 @@ class PlaneClientWrapper:
         except Exception:
             return None
 
-    def update_cycle(  # type: ignore[assignment]  # type: ignore[assignment]
+    def update_cycle(  # type: ignore[assignment]
         self,
-        workspace_id: str,  # type: ignore[assignment]  # type: ignore[assignment]
+        workspace_slug: str,
         project_id: str,
         cycle_id: str,
         **kwargs,
@@ -330,7 +338,7 @@ class PlaneClientWrapper:
         """Update an existing cycle."""
         try:
             result = self.client.cycles.update(
-                workspace_id=workspace_id,
+                workspace_slug=workspace_slug,
                 project_id=project_id,
                 cycle_id=cycle_id,
                 data=kwargs,
@@ -342,12 +350,12 @@ class PlaneClientWrapper:
     # ==================== Module Methods ====================
 
     def get_module(
-        self, workspace_id: str, project_id: str, module_id: str
+        self, workspace_slug: str, project_id: str, module_id: str
     ) -> dict[str, Any] | None:
         """Get module details."""
         try:
             result = self.client.modules.retrieve(
-                workspace_id=workspace_id,
+                workspace_slug=workspace_slug,
                 project_id=project_id,
                 module_id=module_id,
             )
@@ -356,27 +364,32 @@ class PlaneClientWrapper:
             return None
 
     def list_modules(
-        self, workspace_id: str, project_id: str, page: int = 1, limit: int = 20
+        self, workspace_slug: str, project_id: str, page: int = 1, limit: int = 20
     ) -> list[dict[str, Any]]:
         """List modules in a project."""
         try:
+            params = PaginatedQueryParams(per_page=limit)
             result = self.client.modules.list(
-                workspace_id=workspace_id,
+                workspace_slug=workspace_slug,
                 project_id=project_id,
-                page=page,
-                limit=limit,
+                params=params,
             )
-            return [m.model_dump() for m in result] if result else []
+            # Handle paginated response
+            if hasattr(result, "results"):
+                return (
+                    [m.model_dump() for m in result.results] if result.results else []
+                )
+            return []
         except Exception:
             return []
 
     # ==================== Page Methods ====================
 
-    def get_page(self, workspace_id: str, page_id: str) -> dict[str, Any] | None:
+    def get_page(self, workspace_slug: str, page_id: str) -> dict[str, Any] | None:
         """Get page details."""
         try:
             result = self.client.pages.retrieve(
-                workspace_id=workspace_id,
+                workspace_slug=workspace_slug,
                 page_id=page_id,
             )
             return result.model_dump() if result else None
@@ -384,36 +397,40 @@ class PlaneClientWrapper:
             return None
 
     def list_pages(
-        self, workspace_id: str, page: int = 1, limit: int = 20
+        self, workspace_slug: str, page: int = 1, limit: int = 20
     ) -> list[dict[str, Any]]:
         """List pages in a workspace."""
         try:
+            params = PaginatedQueryParams(per_page=limit)
             result = self.client.pages.list(
-                workspace_id=workspace_id,
-                page=page,
-                limit=limit,
+                workspace_slug=workspace_slug,
+                params=params,
             )
-            return [p.model_dump() for p in result] if result else []
+            # Handle paginated response
+            if hasattr(result, "results"):
+                return (
+                    [p.model_dump() for p in result.results] if result.results else []
+                )
+            return []
         except Exception:
             return []
 
     def create_page(
         self,
-        workspace_id: str,
+        workspace_slug: str,
         title: str,
         content: str | None = None,
         description: str | None = None,
     ) -> dict[str, Any] | None:
         """Create a new page."""
         try:
-            data = {"name": title}
-            if description:
-                data["description_html"] = description
-            if content:
-                data["content_html"] = content
-
+            data = CreatePage(
+                name=title,
+                description_html=description or "",
+                content_html=content or "",
+            )
             result = self.client.pages.create(
-                workspace_id=workspace_id,
+                workspace_slug=workspace_slug,
                 data=data,
             )
             return result.model_dump() if result else None
@@ -422,14 +439,14 @@ class PlaneClientWrapper:
 
     def update_page(  # type: ignore[no-untyped-def]
         self,
-        workspace_id: str,
+        workspace_slug: str,
         page_id: str,
         **kwargs,
     ) -> dict[str, Any] | None:
         """Update an existing page."""
         try:
             result = self.client.pages.update(
-                workspace_id=workspace_id,
+                workspace_slug=workspace_slug,
                 page_id=page_id,
                 data=kwargs,
             )
@@ -439,11 +456,11 @@ class PlaneClientWrapper:
 
     # ==================== State Methods ====================
 
-    def list_states(self, workspace_id: str, project_id: str) -> list[dict[str, Any]]:
+    def list_states(self, workspace_slug: str, project_id: str) -> list[dict[str, Any]]:
         """List all states for a project."""
         try:
             result = self.client.states.list(
-                workspace_id=workspace_id,
+                workspace_slug=workspace_slug,
                 project_id=project_id,
             )
             return [s.model_dump() for s in result] if result else []
@@ -452,7 +469,7 @@ class PlaneClientWrapper:
 
     # ==================== Member/User Methods ====================
 
-    def get_member(self, workspace_id: str, member_id: str) -> dict[str, Any] | None:
+    def get_member(self, workspace_slug: str, member_id: str) -> dict[str, Any] | None:
         """Get member details."""
         try:
             result = self.client.users.retrieve(user_id=member_id)
@@ -461,24 +478,29 @@ class PlaneClientWrapper:
             return None
 
     def list_members(
-        self, workspace_id: str, page: int = 1, limit: int = 20
+        self, workspace_slug: str, page: int = 1, limit: int = 20
     ) -> list[dict[str, Any]]:
         """List members in a workspace."""
         try:
+            params = PaginatedQueryParams(per_page=limit)
             result = self.client.users.list(
-                workspace_id=workspace_id,
-                page=page,
-                limit=limit,
+                workspace_slug=workspace_slug,
+                params=params,
             )
-            return [u.model_dump() for u in result] if result else []
+            # Handle paginated response
+            if hasattr(result, "results"):
+                return (
+                    [u.model_dump() for u in result.results] if result.results else []
+                )
+            return []
         except Exception:
             return []
 
     # ==================== Search Methods ====================
 
-    def search_work_items(  # type: ignore[no-untyped-def]
+    def search_work_items(
         self,
-        workspace_id: str,
+        workspace_slug: str,
         project_id: str,
         query: str,
         page: int = 1,
@@ -491,13 +513,14 @@ class PlaneClientWrapper:
         Note: Uses advanced_search for full-text search capabilities.
         """
         try:
+            from plane.models.work_items import AdvancedSearchWorkItem
+
+            data = AdvancedSearchWorkItem(
+                query=query, project_id=project_id, limit=limit
+            )
             result = self.client.work_items.advanced_search(
-                workspace_id=workspace_id,
-                project_id=project_id,
-                query=query,
-                page=page,
-                limit=limit,
-                **filters,
+                workspace_slug=workspace_slug,
+                data=data,
             )
             return [w.model_dump() for w in result] if result else []
         except Exception:
@@ -505,36 +528,43 @@ class PlaneClientWrapper:
 
     # ==================== Label Methods ====================
 
-    def list_labels(self, workspace_id: str, project_id: str) -> list[dict[str, Any]]:
+    def list_labels(self, workspace_slug: str, project_id: str) -> list[dict[str, Any]]:
         """List all labels in a project."""
         try:
             result = self.client.labels.list(
-                workspace_id=workspace_id,
+                workspace_slug=workspace_slug,
                 project_id=project_id,
             )
-            return [label.model_dump() for label in result] if result else []
+            # Handle paginated response
+            if hasattr(result, "results"):
+                return (
+                    [label.model_dump() for label in result.results]
+                    if result.results
+                    else []
+                )
+            return []
         except Exception:
             return []
 
     # ==================== Utility Methods ====================
 
-    def get_workspace_members(self, workspace_id: str) -> list[dict[str, Any]]:
+    def get_workspace_members(self, workspace_slug: str) -> list[dict[str, Any]]:
         """Get members of a workspace."""
         try:
             result = self.client.teamspaces.get_members(
-                id=workspace_id,
+                workspace_slug=workspace_slug,
             )
             return [m.model_dump() for m in result] if result else []
         except Exception:
             return []
 
     def get_project_members(
-        self, workspace_id: str, project_id: str
+        self, workspace_slug: str, project_id: str
     ) -> list[dict[str, Any]]:
         """Get members of a project."""
         try:
             result = self.client.projects.get_members(
-                workspace_id=workspace_id,
+                workspace_slug=workspace_slug,
                 project_id=project_id,
             )
             return [m.model_dump() for m in result] if result else []
@@ -542,12 +572,12 @@ class PlaneClientWrapper:
             return []
 
     def get_project_features(
-        self, workspace_id: str, project_id: str
+        self, workspace_slug: str, project_id: str
     ) -> dict[str, Any] | None:
         """Get project features/configuration."""
         try:
             result = self.client.projects.get_features(
-                workspace_id=workspace_id,
+                workspace_slug=workspace_slug,
                 project_id=project_id,
             )
             return result.model_dump() if result else None
@@ -556,14 +586,14 @@ class PlaneClientWrapper:
 
     def update_issue_state(
         self,
-        workspace_id: str,
+        workspace_slug: str,
         project_id: str,
         work_item_id: str,
         state: str,
     ) -> dict[str, Any] | None:
         """Update the state of a work item."""
         return self.update_work_item(
-            workspace_id=workspace_id,
+            workspace_slug=workspace_slug,
             project_id=project_id,
             work_item_id=work_item_id,
             state=state,

@@ -74,13 +74,14 @@ async def list_workspaces(
     description="Get detailed information about a specific workspace by ID or slug. Returns workspace configuration, settings, and metadata.",
 )
 async def get_workspace(
+    workspace_slug: str,
     workspace_id: str,
     include_projects: bool = False,
     ctx: Context | None = None,
     client: PlaneClientWrapper = Depends(get_plane_client),
 ) -> dict:
     """Get workspace details."""
-    workspace = client.get_workspace(workspace_id)
+    workspace = client.get_workspace(workspace_slug)
 
     if workspace:
         result = workspace.copy() if isinstance(workspace, dict) else dict(workspace)
@@ -106,7 +107,7 @@ async def list_projects(
     ctx: Context | None = None,
 ) -> dict:
     """List projects in a workspace."""
-    projects = client.list_projects(workspace_id=workspace_id, page=page, limit=limit)
+    projects = client.list_projects(workspace_slug=workspace_id, page=page, limit=limit)
     return {
         "projects": projects,
         "page": page,
@@ -125,13 +126,13 @@ async def get_project(
     client: PlaneClientWrapper = Depends(get_plane_client),
 ) -> dict:
     """Get project details."""
-    project = client.get_project(workspace_id=workspace_id, project_id=project_id)
+    project = client.get_project(workspace_slug=workspace_id, project_id=project_id)
 
     if project:
         result = project.copy() if isinstance(project, dict) else dict(project)
         if include_members:
             result["members"] = client.get_project_members(
-                workspace_id=workspace_id, project_id=project_id
+                workspace_slug=workspace_id, project_id=project_id
             )
         return result
     return {"error": "Project not found"}
@@ -151,7 +152,7 @@ async def create_project(
 ) -> dict:
     """Create a new project."""
     project = client.create_project(
-        workspace_id=workspace_id,
+        workspace_slug=workspace_id,
         name=name,
         description=description,
         project_type=project_type,
@@ -185,7 +186,7 @@ async def update_project(
         kwargs["type"] = project_type
 
     project = client.update_project(
-        workspace_id=workspace_id,
+        workspace_slug=workspace_id,
         project_id=project_id,
         **kwargs,
     )
@@ -224,7 +225,7 @@ async def list_issues(
         filters["labels"] = labels  # type: ignore[assignment]  # type: ignore[assignment]
 
     work_items = client.list_work_items(
-        workspace_id=workspace_id,
+        workspace_slug=workspace_id,
         project_id=project_id,
         page=page,
         limit=limit,
@@ -251,7 +252,7 @@ async def get_issue(
 ) -> dict:
     """Get work item details."""
     work_item = client.get_work_item(
-        workspace_id=workspace_id,
+        workspace_slug=workspace_id,
         project_id=project_id,
         work_item_id=issue_id,
     )
@@ -281,7 +282,7 @@ async def create_issue(
 ) -> dict:
     """Create a new work item."""
     work_item = client.create_work_item(
-        workspace_id=workspace_id,
+        workspace_slug=workspace_id,
         project_id=project_id,
         title=title,
         description=description,
@@ -325,7 +326,7 @@ async def update_issue(
         kwargs["labels"] = labels  # type: ignore[assignment]  # type: ignore[assignment]
 
     work_item = client.update_work_item(
-        workspace_id=workspace_id,
+        workspace_slug=workspace_id,
         project_id=project_id,
         work_item_id=issue_id,
         **kwargs,
@@ -349,7 +350,7 @@ async def delete_issue(
 ) -> dict:
     """Delete a work item."""
     success = client.delete_work_item(
-        workspace_id=workspace_id,
+        workspace_slug=workspace_id,
         project_id=project_id,
         work_item_id=issue_id,
     )
@@ -377,7 +378,7 @@ async def assign_issue(
 ) -> dict:
     """Assign work item to a user."""
     work_item = client.update_work_item(
-        workspace_id=workspace_id,
+        workspace_slug=workspace_id,
         project_id=project_id,
         work_item_id=issue_id,
         assignees=[assignee],
@@ -415,7 +416,7 @@ async def search_issues(
         filters["assignees"] = assignee
 
     work_items = client.search_work_items(
-        workspace_id=workspace_id,
+        workspace_slug=workspace_id,
         project_id=project_id,
         query=query,
         page=page,
@@ -443,7 +444,7 @@ async def update_issue_state(
 ) -> dict:
     """Update work item state."""
     work_item = client.update_issue_state(
-        workspace_id=workspace_id,
+        workspace_slug=workspace_id,
         project_id=project_id,
         work_item_id=issue_id,
         state=state,
@@ -477,7 +478,7 @@ async def list_cycles(
 ) -> dict:
     """List cycles in a project."""
     cycles = client.list_cycles(
-        workspace_id=workspace_id,
+        workspace_slug=workspace_id,
         project_id=project_id,
         page=page,
         limit=limit,
@@ -498,7 +499,7 @@ async def get_cycle(
 ) -> dict:
     """Get cycle details."""
     cycle = client.get_cycle(
-        workspace_id=workspace_id,
+        workspace_slug=workspace_id,
         project_id=project_id,
         cycle_id=cycle_id,
     )
@@ -526,7 +527,7 @@ async def create_cycle(
 ) -> dict:
     """Create a new cycle."""
     cycle = client.create_cycle(
-        workspace_id=workspace_id,
+        workspace_slug=workspace_id,
         project_id=project_id,
         name=name,
         start_date=start_date,
@@ -565,7 +566,7 @@ async def update_cycle(
         kwargs["description_html"] = description
 
     cycle = client.update_cycle(
-        workspace_id=workspace_id,
+        workspace_slug=workspace_id,
         project_id=project_id,
         cycle_id=cycle_id,
         **kwargs,
@@ -594,7 +595,7 @@ async def list_modules(
 ) -> dict:
     """List modules in a project."""
     modules = client.list_modules(
-        workspace_id=workspace_id,
+        workspace_slug=workspace_id,
         project_id=project_id,
         page=page,
         limit=limit,
@@ -615,7 +616,7 @@ async def get_module(
 ) -> dict:
     """Get module details."""
     module = client.get_module(
-        workspace_id=workspace_id,
+        workspace_slug=workspace_id,
         project_id=project_id,
         module_id=module_id,
     )
@@ -645,7 +646,7 @@ async def list_pages(
 ) -> dict:
     """List pages in a workspace."""
     pages = client.list_pages(
-        workspace_id=workspace_id,
+        workspace_slug=workspace_id,
         page=page,
         limit=limit,
     )
@@ -662,7 +663,7 @@ async def get_page(
     client: PlaneClientWrapper = Depends(get_plane_client),
 ) -> dict:
     """Get page details."""
-    page = client.get_page(workspace_id=workspace_id, page_id=page_id)
+    page = client.get_page(workspace_slug=workspace_id, page_id=page_id)
 
     if page:
         return page.copy() if isinstance(page, dict) else dict(page)
@@ -682,7 +683,7 @@ async def create_page(
 ) -> dict:
     """Create a new page."""
     page = client.create_page(
-        workspace_id=workspace_id,
+        workspace_slug=workspace_id,
         title=title,
         content=content,
         description=description,
@@ -715,7 +716,7 @@ async def update_page(
         kwargs["description_html"] = description
 
     page = client.update_page(
-        workspace_id=workspace_id,
+        workspace_slug=workspace_id,
         page_id=page_id,
         **kwargs,
     )
@@ -740,7 +741,7 @@ async def list_states(
     client: PlaneClientWrapper = Depends(get_plane_client),
 ) -> dict:
     """List available states for a project."""
-    states = client.list_states(workspace_id=workspace_id, project_id=project_id)
+    states = client.list_states(workspace_slug=workspace_id, project_id=project_id)
     return {
         "states": states,
         "workspace_id": workspace_id,
@@ -765,7 +766,7 @@ async def list_members(
 ) -> dict:
     """List members in a workspace."""
     members = client.list_members(
-        workspace_id=workspace_id,
+        workspace_slug=workspace_id,
         page=page,
         limit=limit,
     )
@@ -782,7 +783,7 @@ async def get_member(
     client: PlaneClientWrapper = Depends(get_plane_client),
 ) -> dict:
     """Get member details."""
-    member = client.get_member(workspace_id=workspace_id, member_id=member_id)
+    member = client.get_member(workspace_slug=workspace_id, member_id=member_id)
 
     if member:
         return member.copy() if isinstance(member, dict) else dict(member)
@@ -804,7 +805,7 @@ async def list_labels(
     client: PlaneClientWrapper = Depends(get_plane_client),
 ) -> dict:
     """List labels in a project."""
-    labels = client.list_labels(workspace_id=workspace_id, project_id=project_id)
+    labels = client.list_labels(workspace_slug=workspace_id, project_id=project_id)
     return {
         "labels": labels,
         "workspace_id": workspace_id,
