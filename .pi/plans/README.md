@@ -8,8 +8,7 @@ This directory contains **project planning and workflow documentation** for the 
 .pi/plans/
 ├── README.md                          # This file
 ├── DEVELOPMENT_PLAN.md                # Main development roadmap
-├── SESSION_CHECKLIST.md               # Session startup guide
-└── (SDK docs moved to docs/)
+└── SESSION_CHECKLIST.md               # Session startup guide
 ```
 
 ## 📚 File Guide
@@ -34,22 +33,35 @@ This directory contains **project planning and workflow documentation** for the 
 - **Project**: `plane-mcp-redux`
 - **CLI**: `plane-rex`
 - **Module**: `plane_mcp`
-- **Status**: Initial setup complete, ready for live testing
+- **Status**: Phase 2 complete - Stickies, States, View commands implemented
 
 **Key SDK Notes:**
 
 - Use `workspace_slug` not `workspace_id`
 - Use `work_items` not `issues`
 - Use `.model_dump()` not `.to_dict()`
-- SDK has incomplete type stubs (use type ignores)
+- Lazy SDK imports for performance
+- Pre-checks before update/delete operations
+
+**Implemented Features:**
+
+- ✅ Projects CRUD (4/8)
+- ✅ Work Items CRUD + my-tasks (5/13)
+- ✅ Labels (3/6)
+- ✅ Stickies full CRUD (5/5)
+- ✅ States full CRUD (5/5)
+- ✅ View commands for all resources
+- ✅ Error handling with pre-checks
+- ✅ CLI confirmation flow (--autoconfirm, --yes)
 
 ## 🔗 Related Documentation
 
 - [AGENTS.md](../AGENTS.md) - Project overview and patterns
+- [IMPLEMENTATION_SUMMARY.md](../IMPLEMENTATION_SUMMARY.md) - Latest session summary
+- [SDK_COVERAGE.md](../docs/SDK_COVERAGE.md) - SDK coverage tracking
 - [docs/makeplane_plane-python-sdk/INDEX.md](../docs/makeplane_plane-python-sdk/INDEX.md) - SDK API documentation
-- [docs/makeplane_plane-python-sdk/planning/SDK_API_MAPPING.md](../docs/makeplane_plane-python-sdk/planning/SDK_API_MAPPING.md) - SDK methods
 
 ---
 
-**Last Updated**: 2026-04-13T20:20:00Z
-**Document Version**: 1.1.0
+**Last Updated**: 2026-04-14
+**Document Version**: 2.0.0

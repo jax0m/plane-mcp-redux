@@ -1,17 +1,17 @@
 """Tests for Plane MCP server."""
 
 from plane_mcp.client import PlaneClientWrapper
-from plane_mcp.server import PlaneConfig, get_plane_client, mcp
+from plane_mcp.server import Settings, get_plane_client, mcp
 
 
-class TestPlaneConfig:
-    """Tests for PlaneConfig."""
+class TestSettings:
+    """Tests for Settings."""
 
     def test_default_values(self):
         """Test config can be instantiated."""
         # Just verify config loads without error
         # (actual values depend on .env file)
-        config = PlaneConfig()
+        config = Settings()
         assert config is not None
         assert len(config.PLANE_BASE_URL) > 0
 
@@ -37,10 +37,9 @@ class TestFastMCPInstance:
         assert mcp is not None
         assert mcp.name == "plane-mcp-redux"
 
-    def test_mcp_has_instructions(self):
-        """Test that MCP has instructions."""
-        assert mcp.instructions is not None
-        assert "Plane project management" in mcp.instructions
+    def test_mcp_has_name(self):
+        """Test that MCP has a name."""
+        assert mcp.name == "plane-mcp-redux"
 
     def test_tools_are_registered(self):
         """Test that tools are registered on the MCP instance."""

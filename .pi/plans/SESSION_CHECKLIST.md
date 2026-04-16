@@ -1,10 +1,10 @@
 # Session Startup Checklist
 
-**Created**: 2026-04-13T23:00:00Z
-**Last Updated**: 2026-04-13T23:00:00Z
+**Created**: 2026-04-13T23:00:0Z
+**Last Updated**: 2026-04-14
 **Owner**: AI Assistant
 **Status**: Active
-**Version**: 1.0.0
+**Version**: 2.0.0
 
 ---
 
@@ -14,15 +14,18 @@
 
 - [ ] Read `AGENTS.md` - Project overview and patterns
 - [ ] Read `.pi/plans/DEVELOPMENT_PLAN.md` - Main roadmap
-- Read `docs/makeplane_plane-python-sdk/INDEX.md` - SDK documentation
+- [ ] Read `IMPLEMENTATION_SUMMARY.md` - Latest session summary
+- [ ] Read `docs/SDK_COVERAGE.md` - SDK coverage tracking
+- [ ] Read `docs/makeplane_plane-python-sdk/INDEX.md` - SDK documentation
 
 ### 2. Verify Environment
 
 ```bash
-# Check server command
+# Check CLI is available
 which plane-rex
+plane-rex --help
 
-# Check API credentials
+# Check API credentials (do not share these!)
 grep PLANE_BASE_URL .env
 grep PLANE_API_KEY .env
 grep PLANE_WORKSPACE_SLUG .env
@@ -30,15 +33,32 @@ grep PLANE_WORKSPACE_SLUG .env
 
 ### 3. Review Recent Changes
 
-- [ ] Check git status
-- [ ] Review recent commits
-- [ ] Check for failed tests
+```bash
+# Check git status
+git status --short
+
+# Review recent commits
+git log --oneline -10
+
+# Run tests
+pytest tests/ -v
+
+# Type check
+mypy src/plane_mcp/ tests/
+
+# Lint
+ruff check src/plane_mcp/ tests/
+```
 
 ### 4. Understand Current Focus
 
-**Current Status**: Initial setup complete, ready for live testing
+**Current Status**: Phase 2 complete - Stickies, States, View commands, User worklist implemented
 
-**Next Priority**: Test with real Plane API credentials
+**Next Priority**:
+
+1. Add MCP tools for stickies and states
+2. GitHub Actions CI workflow
+3. Label update/delete CLI commands
 
 ---
 
@@ -50,6 +70,7 @@ grep PLANE_WORKSPACE_SLUG .env
 - **CLI**: `plane-rex`
 - **Module**: `plane_mcp`
 - **SDK**: plane-python-sdk v0.2.8
+- **FastMCP**: v3.x
 
 ### SDK Patterns
 
@@ -57,12 +78,44 @@ grep PLANE_WORKSPACE_SLUG .env
 - Use `work_items` not `issues`
 - Use `.model_dump()` not `.to_dict()`
 - `CreateProject` requires `identifier` field
+- Lazy SDK imports for performance
 
-### API Instance
+### Implemented Commands
 
-- **URL**: https://your-plane-instance.com
-- **Workspace**: your-workspace-slug
-- **Edition**: Community Edition
+```bash
+# Projects
+plane-rex project list
+plane-rex project create "Name" -i IDENTIFIER
+plane-rex project info <id>
+plane-rex project delete <id>
+
+# Work Items
+plane-rex work list -p <project>
+plane-rex work add "Title" -p <project>
+plane-rex work info <id> -p <project>
+plane-rex work update <id> -p <project> -n "New"
+plane-rex work delete <id> -p <project>
+plane-rex work my-tasks  # Assigned to you
+
+# Labels
+plane-rex label list -p <project>
+plane-rex label create "Name" -p <project>
+plane-rex label info <id> -p <project>
+
+# Stickies (workspace-level)
+plane-rex sticky list
+plane-rex sticky create "Content"
+plane-rex sticky info <id>
+plane-rex sticky update <id> --content "New"
+plane-rex sticky delete <id>
+
+# States
+plane-rex state list -p <project>
+plane-rex state create "Name" -p <project>
+plane-rex state info <id> -p <project>
+plane-rex state update <id> -p <project> --name "New"
+plane-rex state delete <id> -p <project>
+```
 
 ---
 
@@ -70,10 +123,11 @@ grep PLANE_WORKSPACE_SLUG .env
 
 - [AGENTS.md](../AGENTS.md) - Project overview
 - [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md) - Main roadmap
-- [SDK_API_MAPPING.md](SDK_API_MAPPING.md) - SDK methods
+- [IMPLEMENTATION_SUMMARY.md](../IMPLEMENTATION_SUMMARY.md) - Latest session
+- [SDK_COVERAGE.md](../docs/SDK_COVERAGE.md) - Coverage tracking
 - [INDEX.md](../docs/makeplane_plane-python-sdk/INDEX.md) - SDK docs
 
 ---
 
-**Last Updated**: 2026-04-13T23:00:00Z
-**Document Version**: 1.0.0
+**Last Updated**: 2026-04-14
+**Document Version**: 2.0.0

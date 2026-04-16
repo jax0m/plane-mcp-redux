@@ -38,6 +38,6 @@
       ]
     }
   },
-  "onCreateCommand": "sudo apt update && sudo apt install -y python3 python3-venv python3-pip pre-commit python-is-python3 gh dos2unix",
+  "onCreateCommand": "sudo apt update && sudo apt install -y python3 python3-venv python3-pip pre-commit python-is-python3 gh dos2unix && sudo chown -R vscode:vscode /workspaces/ && sudo dos2unix -R -q /workspaces/**/*",
   "postCreateCommand": ".devcontainer/postCreate.sh && pre-commit install"
 }

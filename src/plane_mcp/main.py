@@ -10,8 +10,8 @@ Examples:
     plane-rex label create "Bug" --project my-project
 """
 
-from click import main as click_main
+from plane_mcp.cli import cli
 
 if __name__ == "__main__":
     # Run the click CLI
-    click_main("plane_mcp.cli:cli")
+    cli()

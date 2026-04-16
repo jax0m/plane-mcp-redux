@@ -6,10 +6,12 @@ with proper error handling for production use.
 """
 
 import os
+from typing import NoReturn
 
 # Load environment variables
 from dotenv import load_dotenv
 from fastmcp import FastMCP
+from fastmcp.exceptions import ToolError
 from plane.errors.errors import ConfigurationError, HttpError, PlaneError
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -23,69 +25,98 @@ mcp = FastMCP("plane-mcp-redux")
 # =============================================================================
 
 
-def handle_error(func, error):
-    """
-    Standard error handler for all tools.
-
-    Args:
-        func: The function that was called
-        error: The exception that occurred
-
-    Returns:
-        MCP Error message
-    """
-    error_type = type(error).__name__
-
-    if isinstance(error, ConfigurationError):
-        message = f"Configuration error: {error}"
-    elif isinstance(error, HttpError):
-        message = f"API error ({error.status_code}): {error.message}"
-    elif isinstance(error, PlaneError):
-        message = f"Plane API error: {error}"
-    else:
-        message = f"Unexpected error ({error_type}): {str(error)[:200]}"
-
-    raise mcp.Error(f"[{error_type}] {message}")
+def format_http_error(error: HttpError) -> str:
+    """Format HTTP error with context-specific messages."""
+    messages: dict[int, str] = {
+        400: "Bad Request - Missing required fields or invalid parameters",
+        401: "Unauthorized - Invalid or missing API key",
+        403: "Forbidden - Insufficient permissions",
+        404: "Not Found - Resource does not exist",
+        409: "Conflict - Resource already exists (try different identifier)",
+        422: "Validation Error - Invalid data format",
+        429: "Rate Limited - Too many requests, please wait",
+        500: "Internal Server Error - Plane API issue",
+        502: "Bad Gateway - Plane API unavailable",
+        503: "Service Unavailable - Plane API temporarily down",
+    }
+    base_msg = messages.get(error.status_code, f"HTTP {error.status_code}")
+    return (
+        f"❌ {base_msg}\n   Details: {error.message}"
+        if hasattr(error, "message")
+        else f"❌ {base_msg}"
+    )
 
 
-def handle_api_error(func, error):
+def handle_api_error(error: Exception) -> NoReturn:
     """
     Handle API-specific errors with user-friendly messages.
 
     Args:
-        func: The function that was called
         error: The exception that occurred
+
+    Raises:
+        ToolError: Formatted error message
     """
     if isinstance(error, ConfigurationError):
-        raise mcp.Error(
+        raise ToolError(
             "❌ Configuration Error\n"
             "   - Check your .env file\n"
             "   - Ensure PLANE_API_KEY is set\n"
             "   - Ensure PLANE_BASE_URL is correct"
         )
-    elif isinstance(error, HttpError):
-        if error.status_code == 404:
-            raise mcp.Error(
-                "❌ Not Found\n"
-                "   - Resource doesn't exist\n"
-                "   - Check the project_id or work_item_id"
-            )
-        elif error.status_code == 400:
-            raise mcp.Error(
-                "❌ Bad Request\n   - Missing required fields\n   - Invalid parameters"
-            )
-        elif error.status_code == 409:
-            raise mcp.Error(
-                "❌ Conflict\n"
-                "   - Resource already exists\n"
-                "   - Use a different identifier"
-            )
-        else:
-            raise mcp.Error(f"❌ HTTP {error.status_code}\n   - {error.message}")
-    elif isinstance(error, PlaneError):
-        raise mcp.Error(f"❌ Plane API Error: {error}")
-    else:
-        raise mcp.Error(f"❌ Unexpected error: {type(error).__name__}")
+    if isinstance(error, HttpError):
+        raise ToolError(format_http_error(error))
+    if isinstance(error, PlaneError):
+        raise ToolError(f"❌ Plane API Error: {error}")
+    raise ToolError(f"❌ Unexpected error ({type(error).__name__}): {str(error)[:200]}")
+
+
+# =============================================================================
+# PRE-CHECK UTILITIES
+# =============================================================================
+
+
+def project_exists(project_id: str, client) -> bool:
+    """Check if a project exists by ID."""
+    try:
+        client.projects.retrieve(
+            workspace_slug=settings.PLANE_WORKSPACE_SLUG, project_id=project_id
+        )
+        return True
+    except HttpError:
+        return False
+    except Exception:
+        return False
+
+
+def work_item_exists(project_id: str, work_item_id: str, client) -> bool:
+    """Check if a work item exists."""
+    try:
+        client.work_items.retrieve(
+            workspace_slug=settings.PLANE_WORKSPACE_SLUG,
+            project_id=project_id,
+            work_item_id=work_item_id,
+        )
+        return True
+    except HttpError:
+        return False
+    except Exception:
+        return False
+
+
+def label_exists(project_id: str, label_id: str, client) -> bool:
+    """Check if a label exists."""
+    try:
+        client.labels.retrieve(
+            workspace_slug=settings.PLANE_WORKSPACE_SLUG,
+            project_id=project_id,
+            label_id=label_id,
+        )
+        return True
+    except HttpError:
+        return False
+    except Exception:
+        return False
 
 
 # =============================================================================
@@ -162,7 +193,7 @@ async def project_list() -> list[dict]:
         return result
 
     except Exception as e:
-        handle_api_error(project_list, e)
+        handle_api_error(e)
 
 
 @mcp.tool(description="Create a new project")
@@ -191,7 +222,7 @@ async def project_create(name: str, identifier: str | None = None) -> dict:
         }
 
     except Exception as e:
-        handle_api_error(project_create, e)
+        handle_api_error(e)
 
 
 @mcp.tool(description="Get project details by UUID")
@@ -214,21 +245,32 @@ async def project_info(project_id: str) -> dict:
         }
 
     except Exception as e:
-        handle_api_error(project_info, e)
+        handle_api_error(e)
 
 
 @mcp.tool(description="Delete a project by UUID")
 async def project_delete(project_id: str) -> dict:
-    """Delete a project by UUID."""
+    """Delete a project by UUID. Verifies existence before deletion."""
     try:
         client = get_plane_client()
+
+        # Pre-check: verify project exists
+        if not project_exists(project_id, client):
+            raise ToolError(
+                f"❌ Project not found: {project_id}\n"
+                "   - Verify the project ID is correct\n"
+                "   - Use project_list to see available projects"
+            )
+
         client.projects.delete(
             workspace_slug=settings.PLANE_WORKSPACE_SLUG, project_id=project_id
         )
         return {"status": "deleted", "project_id": project_id}
 
+    except ToolError:
+        raise
     except Exception as e:
-        handle_api_error(project_delete, e)
+        handle_api_error(e)
 
 
 # =============================================================================
@@ -242,10 +284,18 @@ async def work_list(
     state: str | None = None,
     label: str | None = None,
 ) -> list[dict]:
-    """List work items in a project with optional filters."""
+    """List work items in a project with optional filters. Verifies project exists."""
     try:
         client = get_plane_client()
         from plane.models.query_params import WorkItemQueryParams
+
+        # Pre-check: verify project exists
+        if not project_exists(project_id, client):
+            raise ToolError(
+                f"❌ Project not found: {project_id}\n"
+                "   - Verify the project ID is correct\n"
+                "   - Use project_list to see available projects"
+            )
 
         params = WorkItemQueryParams()
         if state:
@@ -275,8 +325,10 @@ async def work_list(
 
         return result
 
+    except ToolError:
+        raise
     except Exception as e:
-        handle_api_error(work_list, e)
+        handle_api_error(e)
 
 
 @mcp.tool(description="Create a new work item (task/issue)")
@@ -287,11 +339,19 @@ async def work_add(
     priority: str = "medium",
     labels: list[str] | None = None,
 ) -> dict:
-    """Create a new work item. Only title is required!"""
+    """Create a new work item. Verifies project exists before creation."""
     try:
         from plane.models.work_items import CreateWorkItem
 
         client = get_plane_client()
+
+        # Pre-check: verify project exists
+        if not project_exists(project_id, client):
+            raise ToolError(
+                f"❌ Project not found: {project_id}\n"
+                "   - Verify the project ID is correct\n"
+                "   - Use project_list to see available projects"
+            )
 
         data = CreateWorkItem(
             project_id=project_id,
@@ -315,8 +375,10 @@ async def work_add(
             "labels": work_item.labels,
         }
 
+    except ToolError:
+        raise
     except Exception as e:
-        handle_api_error(work_add, e)
+        handle_api_error(e)
 
 
 @mcp.tool(description="Update a work item")
@@ -328,11 +390,26 @@ async def work_update(
     priority: str | None = None,
     labels: list[str] | None = None,
 ) -> dict:
-    """Update a work item with partial fields."""
+    """Update a work item with partial fields. Verifies existence before update."""
     try:
         from plane.models.work_items import UpdateWorkItem
 
         client = get_plane_client()
+
+        # Pre-check: verify work item exists
+        if not work_item_exists(project_id, work_item_id, client):
+            raise ToolError(
+                f"❌ Work item not found: {work_item_id} in project {project_id}\n"
+                "   - Verify the IDs are correct\n"
+                "   - Use work_list to see available work items"
+            )
+
+        # Validate at least one field is provided
+        if all(v is None for v in [name, description, priority, labels]):
+            raise ToolError(
+                "❌ No update fields provided\n"
+                "   - Provide at least one of: name, description, priority, labels"
+            )
 
         data = UpdateWorkItem()
         if name is not None:
@@ -357,15 +434,26 @@ async def work_update(
             "priority": work_item.priority,
         }
 
+    except ToolError:
+        raise
     except Exception as e:
-        handle_api_error(work_update, e)
+        handle_api_error(e)
 
 
 @mcp.tool(description="Delete a work item")
 async def work_delete(project_id: str, work_item_id: str) -> dict:
-    """Delete a work item."""
+    """Delete a work item. Verifies existence before deletion."""
     try:
         client = get_plane_client()
+
+        # Pre-check: verify work item exists
+        if not work_item_exists(project_id, work_item_id, client):
+            raise ToolError(
+                f"❌ Work item not found: {work_item_id} in project {project_id}\n"
+                "   - Verify the IDs are correct\n"
+                "   - Use work_list to see available work items"
+            )
+
         client.work_items.delete(
             workspace_slug=settings.PLANE_WORKSPACE_SLUG,
             project_id=project_id,
@@ -373,8 +461,10 @@ async def work_delete(project_id: str, work_item_id: str) -> dict:
         )
         return {"status": "deleted", "work_item_id": work_item_id}
 
+    except ToolError:
+        raise
     except Exception as e:
-        handle_api_error(work_delete, e)
+        handle_api_error(e)
 
 
 # =============================================================================
@@ -384,26 +474,45 @@ async def work_delete(project_id: str, work_item_id: str) -> dict:
 
 @mcp.tool(description="List labels in a project")
 async def label_list(project_id: str) -> list[dict]:
-    """List all labels in a project."""
+    """List all labels in a project. Verifies project exists."""
     try:
         client = get_plane_client()
+
+        # Pre-check: verify project exists
+        if not project_exists(project_id, client):
+            raise ToolError(
+                f"❌ Project not found: {project_id}\n"
+                "   - Verify the project ID is correct\n"
+                "   - Use project_list to see available projects"
+            )
+
         labels = client.labels.list(
             workspace_slug=settings.PLANE_WORKSPACE_SLUG, project_id=project_id
         )
 
         return [label.model_dump() for label in labels.results]
 
+    except ToolError:
+        raise
     except Exception as e:
-        handle_api_error(label_list, e)
+        handle_api_error(e)
 
 
 @mcp.tool(description="Create a new label")
 async def label_create(project_id: str, name: str, color: str = "#0088FE") -> dict:
-    """Create a new label in a project."""
+    """Create a new label in a project. Verifies project exists before creation."""
     try:
         from plane.models.labels import CreateLabel
 
         client = get_plane_client()
+
+        # Pre-check: verify project exists
+        if not project_exists(project_id, client):
+            raise ToolError(
+                f"❌ Project not found: {project_id}\n"
+                "   - Verify the project ID is correct\n"
+                "   - Use project_list to see available projects"
+            )
 
         label = client.labels.create(
             workspace_slug=settings.PLANE_WORKSPACE_SLUG,
@@ -411,10 +520,12 @@ async def label_create(project_id: str, name: str, color: str = "#0088FE") -> di
             data=CreateLabel(name=name, color=color),
         )
 
-        return label.model_dump()
+        return label.model_dump()  # type: ignore[no-any-return]
 
+    except ToolError:
+        raise
     except Exception as e:
-        handle_api_error(label_create, e)
+        handle_api_error(e)
 
 
 @mcp.tool(description="Assign a label to a work item")
@@ -423,11 +534,27 @@ async def label_assign(
     work_item_id: str,
     label_id: str,
 ) -> dict:
-    """Assign a label to a work item."""
+    """Assign a label to a work item. Verifies both exist before assignment."""
     try:
         from plane.models.work_items import UpdateWorkItem
 
         client = get_plane_client()
+
+        # Pre-check: verify work item exists
+        if not work_item_exists(project_id, work_item_id, client):
+            raise ToolError(
+                f"❌ Work item not found: {work_item_id} in project {project_id}\n"
+                "   - Verify the IDs are correct\n"
+                "   - Use work_list to see available work items"
+            )
+
+        # Pre-check: verify label exists
+        if not label_exists(project_id, label_id, client):
+            raise ToolError(
+                f"❌ Label not found: {label_id} in project {project_id}\n"
+                "   - Verify the label ID is correct\n"
+                "   - Use label_list to see available labels"
+            )
 
         work_item = client.work_items.update(
             workspace_slug=settings.PLANE_WORKSPACE_SLUG,
@@ -442,8 +569,10 @@ async def label_assign(
             "labels": work_item.labels,
         }
 
+    except ToolError:
+        raise
     except Exception as e:
-        handle_api_error(label_assign, e)
+        handle_api_error(e)
 
 
 # =============================================================================
@@ -457,7 +586,7 @@ def create_work_item_prompt(
     task_name: str = "Enter task name...",
     description: str = "Brief description...",
     priority: str = "medium",
-    labels: list[str] = None,
+    labels: list[str] | None = None,
 ) -> str:
     """
     Interactive prompt to create a new work item.
@@ -473,7 +602,9 @@ def create_work_item_prompt(
         Formatted prompt for CLI or chat
     """
     if labels is None:
-        labels = [None]
+        labels_str = "(none)"
+    else:
+        labels_str = ", ".join(labels) if labels else "(none)"
     return f"""
 # Create Work Item
 
@@ -481,7 +612,7 @@ def create_work_item_prompt(
 **Task**: {task_name}
 **Description**: {description}
 **Priority**: {priority}
-**Labels**: {", ".join(labels)}
+**Labels**: {labels_str}
 
 ---
 
